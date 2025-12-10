@@ -22,6 +22,14 @@ int main(int argc, char* argv[])
 
     }
 
+    if(unlink(argv[1]) < 0)
+    {
+
+        printf(2,"mv: cannot unlink %s\n",argv[1]);
+        exit();
+
+    }
+
     exit();
 
 }

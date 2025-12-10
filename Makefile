@@ -184,6 +184,9 @@ UPROGS=\
 	_mytest\
 	_symlink\
 	_cp\
+	_mv\
+	_touch\
+	_uptime\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
