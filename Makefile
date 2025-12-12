@@ -188,6 +188,7 @@ UPROGS=\
 	_touch\
 	_uptime\
 	_sleep\
+	_pingpong\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
