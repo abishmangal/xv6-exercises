@@ -183,9 +183,12 @@ UPROGS=\
 	_zombie\
 	_mytest\
 	_symlink\
+	_login\
 
-fs.img: mkfs README $(UPROGS)
-	./mkfs fs.img README $(UPROGS)
+fs.img: mkfs README shadow $(UPROGS)
+	./mkfs fs.img README shadow $(UPROGS)
+
+
 
 -include *.d
 
