@@ -126,13 +126,27 @@ int lsh_exit(char **args)
   @return Always returns 1, to continue execution.
  */
 
-int lsh_launch(char **args)
+int lsh_launch(char **args, char *infile, char *outfile)
 {
   int pid = fork();
   if (pid == 0) {
+
+    // input redirection
+    if (infile) {
+      close(0);
+      open(infile, O_RDONLY);
+    }
+
+    // output redirection
+    if (outfile) {
+      close(1);
+      open(outfile, O_WRONLY | O_CREATE);
+    }
+
     exec(args[0], args);
     printf(2, "lsh: exec failed\n");
     exit();
+
   } else if (pid > 0) {
     wait();
   } else {
@@ -140,30 +154,58 @@ int lsh_launch(char **args)
   }
   return 1;
 }
-
-/**
-   @brief Execute shell built-in or launch program.
-   @param args Null terminated list of arguments.
-   @return 1 if the shell should continue running, 0 if it should terminate
+/*
+ * Execute built-ins or external commands
+ * with support for multiple combined redirections
  */
 int lsh_execute(char **args)
 {
   int i;
+  char *infile = 0;
+  char *outfile = 0;
 
-  if (args[0] == 0) {
-    // An empty command was entered.
+  if (args[0] == 0)
     return 1;
+
+  /*
+   * Scan entire argument list for redirections.
+   * Multiple redirections are allowed; last one wins.
+   */
+  for (i = 0; args[i] != 0; i++) {
+
+    if (strcmp(args[i], "<") == 0) {
+      if (args[i+1] == 0) {
+        printf(2, "lsh: missing input file\n");
+        return 1;
+      }
+      infile = args[i+1];  // overwrite if repeated
+      args[i] = 0;         // terminate argv for exec
+    }
+
+    if (strcmp(args[i], ">") == 0) {
+      if (args[i+1] == 0) {
+        printf(2, "lsh: missing output file\n");
+        return 1;
+      }
+      outfile = args[i+1]; // overwrite if repeated
+      args[i] = 0;         // terminate argv for exec
+    }
   }
 
+  /*
+   * Built-in commands (no exec)
+   */
   for (i = 0; i < lsh_num_builtins(); i++) {
     if (strcmp(args[0], builtin_str[i]) == 0) {
       return (*builtin_func[i])(args);
     }
   }
 
-  return lsh_launch(args);
+  /*
+   * External command
+   */
+  return lsh_launch(args, infile, outfile);
 }
-
 #define LSH_RL_BUFSIZE 1024
 /**
    @brief Read a line of input from stdin.
